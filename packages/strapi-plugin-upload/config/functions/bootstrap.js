@@ -17,8 +17,13 @@ module.exports = async () => {
   const defaults = {
     sizeOptimization: true,
     responsiveDimensions: true,
-    supportFormat: ['*/*'],
-    supportFormatOptions: ['*/*', 'audio/*', 'video/*', 'image/*'],
+    supportFormat: ['.*'],
+    supportFormatOptions: [
+      { label: '*/*', regex: '.*' },
+      { label: 'audio/*', regex: 'audio/.*' },
+      { label: 'video/*', regex: 'video/.*' },
+      { label: 'image/*', regex: 'image/.*' },
+    ],
   };
 
   if (!config || (config && !(config.supportFormat && config.supportFormatOptions))) {
