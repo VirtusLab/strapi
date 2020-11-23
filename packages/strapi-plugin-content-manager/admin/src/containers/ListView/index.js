@@ -14,6 +14,7 @@ import {
   useUserPermissions,
   useQuery,
 } from 'strapi-helper-plugin';
+import { shouldAddCloneHeader, getCloneHeader } from 'strapi-plugin-preview';
 import pluginId from '../../pluginId';
 import pluginPermissions from '../../permissions';
 import { generatePermissionsObject, getRequestUrl, getTrad } from '../../utils';
@@ -225,9 +226,12 @@ function ListView({
         },
       });
     }
+    if (shouldAddCloneHeader(layouts[slug])) {
+      headers.unshift(getCloneHeader(formatMessage));
+    }
 
     return headers;
-  }, [formatMessage, getMetaDatas, hasDraftAndPublish, listLayout]);
+  }, [formatMessage, getMetaDatas, hasDraftAndPublish, listLayout, slug, layouts]);
 
   const getFirstSortableElement = useCallback(
     (name = '') => {

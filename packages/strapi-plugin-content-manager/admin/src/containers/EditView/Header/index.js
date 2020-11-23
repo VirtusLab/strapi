@@ -14,6 +14,7 @@ import {
   PopUpWarningIcon,
   PopUpWarningModal,
 } from 'strapi-helper-plugin';
+import { usePreview } from 'strapi-plugin-preview';
 import { getTrad } from '../../../utils';
 import { connect, getDraftRelations, select } from './utils';
 
@@ -41,6 +42,7 @@ const Header = ({
   onPublish,
   onUnpublish,
 }) => {
+  const { previewHeaderActions } = usePreview();
   const [showWarningUnpublish, setWarningUnpublish] = useState(false);
   const { formatMessage } = useIntl();
   const formatMessageRef = useRef(formatMessage);
@@ -129,7 +131,7 @@ const Header = ({
       headerActions.unshift(action);
     }
 
-    return headerActions;
+    return [...previewHeaderActions, ...headerActions];
   }, [
     isCreatingEntry,
     canCreate,
@@ -142,6 +144,7 @@ const Header = ({
     initialData,
     onPublish,
     checkIfHasDraftRelations,
+    previewHeaderActions,
   ]);
 
   const headerProps = useMemo(() => {
