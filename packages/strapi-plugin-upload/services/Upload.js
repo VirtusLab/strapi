@@ -142,7 +142,7 @@ module.exports = {
   },
 
   async uploadFileAndPersist(fileData, { user } = {}) {
-    const config = strapi.plugins.upload.config;
+    const config = this.getPluginConfig();
 
     const {
       getDimensions,
@@ -203,7 +203,7 @@ module.exports = {
   },
 
   async replace(id, { data, file }, { user } = {}) {
-    const config = strapi.plugins.upload.config;
+    const config = this.getPluginConfig();
 
     const {
       getDimensions,
@@ -327,7 +327,7 @@ module.exports = {
   },
 
   async remove(file) {
-    const config = strapi.plugins.upload.config;
+    const config = this.getPluginConfig();
 
     // execute delete function of the provider
     if (file.provider === config.provider) {
@@ -398,5 +398,9 @@ module.exports = {
         key: 'settings',
       })
       .set({ value });
+  },
+
+  getPluginConfig() {
+    return _.get(strapi.plugins, 'upload.config', {});
   },
 };
