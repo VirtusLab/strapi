@@ -39,11 +39,8 @@ module.exports = {
   getUploadConfig: resolveControllerMethod('getUploadConfig'),
 
   async upload(ctx) {
-    const isUploadDisabled = _.get(strapi.plugins, 'upload.config.enabled', true) === false;
-    const {
-      supportFormat,
-      supportFormatOptions,
-    } = await strapi.plugins.upload.services.upload.getSettings();
+    const isUploadDisabled =
+      strapi.plugins.upload.services.upload.getPluginConfig().enabled === false;
 
     if (isUploadDisabled) {
       throw strapi.errors.badRequest(null, {
@@ -52,9 +49,15 @@ module.exports = {
     }
 
     const {
+      supportFormat,
+      supportFormatOptions,
+    } = await strapi.plugins.upload.services.upload.getSettings();
+
+    const {
       query: { id },
       request: { files: { files } = {} },
     } = ctx;
+
     const condition = supportFormatOptions
       .filter(({ label }) => supportFormat.includes(label))
       .some(({ regex }) => new RegExp(regex).test(files.type));
