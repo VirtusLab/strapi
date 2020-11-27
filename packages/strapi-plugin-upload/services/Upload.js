@@ -89,7 +89,9 @@ module.exports = {
   async enhanceFile(file, fileInfo = {}, metas = {}) {
     let readBuffer;
     try {
-      readBuffer = await util.promisify(fs.readFile)(file.path);
+      readBuffer = file.isStream
+        ? file.stream.toBuffer()
+        : await util.promisify(fs.readFile)(file.path);
     } catch (e) {
       if (e.code === 'ERR_FS_FILE_TOO_LARGE') {
         throw strapi.errors.entityTooLarge('FileTooBig', {
