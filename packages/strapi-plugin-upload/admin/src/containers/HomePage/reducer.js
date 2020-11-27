@@ -2,7 +2,6 @@ import { fromJS } from 'immutable';
 
 const initialState = fromJS({
   data: [],
-  config: { input: { accept: [] } },
   dataCount: 0,
   dataToDelete: [],
   isLoading: true,
@@ -22,7 +21,6 @@ const reducer = (state, action) => {
       return state
         .update('data', () => fromJS(action.data))
         .update('dataCount', () => action.count)
-        .update('config', () => action.config)
         .update('isLoading', () => false);
     case 'ON_CHANGE_DATA_TO_DELETE': {
       const { id } = action;

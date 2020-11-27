@@ -34,6 +34,7 @@ import ErrorMessage from './ErrorMessage';
 import form from './utils/form';
 import isImageType from './utils/isImageType';
 import isVideoType from './utils/isVideoType';
+import { useConfigContext } from '../../hooks';
 
 const EditForm = forwardRef(
   (
@@ -59,9 +60,11 @@ const EditForm = forwardRef(
     const [src, setSrc] = useState(null);
     const cacheRef = useRef(performance.now());
 
+    const { cacheBraking } = useConfigContext();
+
     const fileURL = get(fileToEdit, ['file', 'url'], null);
     const prefixedFileURL = fileURL
-      ? prefixFileUrlWithBackendUrl(`${fileURL}?${cacheRef.current}`)
+      ? prefixFileUrlWithBackendUrl(`${fileURL}${cacheBraking ? `?${cacheRef.current}` : ''}`)
       : null;
     const downloadFileName = createFileToDownloadName(fileToEdit);
     const mimeType =

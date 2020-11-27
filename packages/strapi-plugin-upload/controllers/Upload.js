@@ -58,13 +58,15 @@ module.exports = {
       request: { files: { files } = {} },
     } = ctx;
 
-    const condition = supportFormatOptions
-      .filter(({ label }) => supportFormat.includes(label))
-      .some(({ regex }) => new RegExp(regex).test(files.type));
-    if (!condition) {
-      throw strapi.errors.badRequest(null, {
-        errors: [{ id: 'Upload.format.notSupported', message: 'File format is not supported.' }],
-      });
+    if (files) {
+      const condition = supportFormatOptions
+        .filter(({ label }) => supportFormat.includes(label))
+        .some(({ regex }) => new RegExp(regex).test(files.type));
+      if (!condition) {
+        throw strapi.errors.badRequest(null, {
+          errors: [{ id: 'Upload.format.notSupported', message: 'File format is not supported.' }],
+        });
+      }
     }
 
     const controller = resolveController(ctx);

@@ -7,10 +7,12 @@ import Cloud from '../../icons/Cloud';
 import Label from './Label';
 import Input from '../Input';
 import P from './P';
+import { useConfigContext } from '../../hooks';
 
-const InputFileModal = ({ name, onChange, inputConfig }) => {
+const InputFileModal = ({ name, onChange }) => {
   const [isDragging, setIsDragging] = useState(false);
   const { formatMessage } = useGlobalContext();
+  const { input } = useConfigContext();
   const ref = createRef();
 
   const handleAllowDrop = e => e.preventDefault();
@@ -57,7 +59,7 @@ const InputFileModal = ({ name, onChange, inputConfig }) => {
       <Input
         ref={ref}
         type="file"
-        accept={inputConfig.accept.join(',')}
+        accept={input.accept.join(',')}
         multiple
         name={name}
         onChange={handleChange}
@@ -75,9 +77,6 @@ InputFileModal.defaultProps = {
 InputFileModal.propTypes = {
   name: PropTypes.string,
   onChange: PropTypes.func,
-  inputConfig: PropTypes.shape({
-    accept: PropTypes.arrayOf(PropTypes.string).isRequired,
-  }).isRequired,
 };
 
 export default InputFileModal;

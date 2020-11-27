@@ -190,11 +190,16 @@ module.exports = {
 
   async getUploadConfig(ctx) {
     const data = await strapi.plugins.upload.services.upload.getSettings();
+    const config = strapi.plugins.upload.services.upload.getPluginConfig();
+
     if (data.supportFormat) {
-      return (ctx.body = { input: { accept: data.supportFormat } });
+      return (ctx.body = {
+        input: { accept: data.supportFormat },
+        ...(config.frontendOptions || {}),
+      });
     }
 
-    ctx.body = { input: { types: ['*/*'] } };
+    ctx.body = { input: { types: ['*/*'] }, ...(config.frontendOptions || {}) };
   },
 };
 
