@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { get, take } from 'lodash';
 import useDataManager from '../../../hooks/useDataManager';
 import { getFieldName } from '../../../utils';
+import { isFieldVisible } from '../../../utils/conditionalLogic';
 
 function useSelect({ isFromDynamicZone, name }) {
   const {
@@ -12,6 +13,7 @@ function useSelect({ isFromDynamicZone, name }) {
     removeComponentFromField,
     readActionAllowedFields,
     updateActionAllowedFields,
+    layout,
   } = useDataManager();
 
   const allowedFields = useMemo(() => {
@@ -97,6 +99,14 @@ function useSelect({ isFromDynamicZone, name }) {
     return hasChildrenReadableFields;
   }, [hasChildrenAllowedFields, hasChildrenReadableFields, isCreatingEntry]);
 
+  const conditionallyHidden = useMemo(() => {
+    return !isFieldVisible({
+      layout,
+      key: name,
+      modifiedData,
+    });
+  }, [modifiedData, layout, name]);
+
   return {
     hasChildrenAllowedFields,
     hasChildrenReadableFields,
@@ -104,6 +114,7 @@ function useSelect({ isFromDynamicZone, name }) {
     isReadOnly,
     removeComponentFromField,
     componentValue,
+    conditionallyHidden,
   };
 }
 

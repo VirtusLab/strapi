@@ -36,6 +36,7 @@ const FieldComponent = ({
   isReadOnly,
   componentValue,
   removeComponentFromField,
+  conditionallyHidden,
 }) => {
   const { allLayoutData } = useEditView();
 
@@ -46,6 +47,10 @@ const FieldComponent = ({
   const currentComponentSchema = get(allLayoutData, ['components', componentUid], {});
 
   const displayedFields = get(currentComponentSchema, ['layouts', 'edit'], []);
+
+  if (conditionallyHidden) {
+    return null;
+  }
 
   if (!hasChildrenAllowedFields && isCreatingEntry) {
     return (
@@ -154,6 +159,7 @@ FieldComponent.propTypes = {
   min: PropTypes.number,
   name: PropTypes.string.isRequired,
   removeComponentFromField: PropTypes.func.isRequired,
+  conditionallyHidden: PropTypes.bool.isRequired,
 };
 
 const Memoized = memo(FieldComponent, isEqual);

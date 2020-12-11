@@ -80,6 +80,7 @@ function Inputs({
   readableFields,
   shouldNotRunValidations,
   value,
+  conditionallyHidden,
 }) {
   const {
     strapi: { fieldApi },
@@ -228,7 +229,7 @@ function Inputs({
 
   const { description, visible } = metadatas;
 
-  if (visible === false) {
+  if (visible === false || conditionallyHidden) {
     return null;
   }
 
@@ -329,6 +330,7 @@ Inputs.propTypes = {
   readableFields: PropTypes.array.isRequired,
   shouldNotRunValidations: PropTypes.bool.isRequired,
   value: PropTypes.any,
+  conditionallyHidden: PropTypes.bool.isRequired,
 };
 
 const Memoized = memo(Inputs, isEqual);

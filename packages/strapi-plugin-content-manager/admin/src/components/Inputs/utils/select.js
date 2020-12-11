@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { get } from 'lodash';
 import useDataManager from '../../../hooks/useDataManager';
 import useEditView from '../../../hooks/useEditView';
+import { isFieldVisible } from '../../../utils/conditionalLogic';
 
 function useSelect(keys) {
   const {
@@ -13,6 +14,7 @@ function useSelect(keys) {
     readActionAllowedFields,
     shouldNotRunValidations,
     updateActionAllowedFields,
+    layout,
   } = useDataManager();
   const { layout: currentContentTypeLayout } = useEditView();
 
@@ -25,6 +27,13 @@ function useSelect(keys) {
   }, [isCreatingEntry, readActionAllowedFields]);
 
   const value = get(modifiedData, keys, null);
+  const conditionallyHidden = useMemo(() => {
+    return !isFieldVisible({
+      layout,
+      key: keys,
+      modifiedData,
+    });
+  }, [modifiedData, layout, keys]);
 
   return {
     allowedFields,
@@ -35,6 +44,7 @@ function useSelect(keys) {
     readableFields,
     shouldNotRunValidations,
     value,
+    conditionallyHidden,
   };
 }
 
