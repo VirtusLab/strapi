@@ -17,7 +17,7 @@ module.exports = async () => {
   const defaults = {
     sizeOptimization: true,
     responsiveDimensions: true,
-    supportFormat: ['.*'],
+    supportFormat: ['*/*'],
     supportFormatOptions: [
       { label: '*/*', regex: '.*' },
       { label: 'audio/*', regex: 'audio/.*' },
