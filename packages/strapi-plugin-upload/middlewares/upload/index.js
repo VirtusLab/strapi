@@ -125,10 +125,12 @@ module.exports = strapi => ({
     });
     strapi.router.get('/uploads/(.*)', range, koaStatic(staticDir, { defer: true }));
     strapi.app.use(async (ctx, next) => {
-      if (isStreamEnabled && ctx.url === '/upload' && ctx.method.toLowerCase() === 'post') {
+      if (isStreamEnabled && ctx.url.startsWith('/upload') && ctx.method.toLowerCase() === 'post') {
         const result = await parseRequest(ctx.req);
         ctx.request.files = { files: result.files };
-        ctx.request.body = { fileInfo: result.fileInfo.stream.toObject() };
+        const fileInfo = { fileInfo: result.fileInfo.stream.toObject() };
+        ctx.request.body = fileInfo;
+        ctx.body = fileInfo;
       }
       return next();
     });

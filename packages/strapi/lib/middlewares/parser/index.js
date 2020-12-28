@@ -47,7 +47,7 @@ module.exports = strapi => {
         // we can parse req only once, if we have enabled streams we don't need koa-body middleware on this endpoint
         if (
           configUploadConfig.streams === true &&
-          ctx.url === '/upload' &&
+          ctx.url.startsWith('/upload') &&
           ctx.method.toLowerCase() === 'post'
         ) {
           return next();
