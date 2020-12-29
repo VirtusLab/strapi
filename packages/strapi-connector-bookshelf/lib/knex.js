@@ -34,11 +34,11 @@ const defaultConfig = {
 
 module.exports = strapi => {
   // For each connection in the config register a new Knex connection.
-  _.forEach(
-    _.pickBy(strapi.config.connections, {
-      connector: 'bookshelf',
-    }),
-    (connection, name) => {
+  const collection = _.pickBy(strapi.config.connections, {
+    connector: 'bookshelf',
+  });
+  return Promise.all(
+    _.map(collection, async (connection, name) => {
       // Make sure we use the client even if the typo is not the exact one.
       switch (connection.settings.client) {
         case 'postgre':
@@ -173,9 +173,14 @@ module.exports = strapi => {
       // please drop us an email at support@strapi.io-- it would avoid the Strapi
       // applications to have `knex` as a dependency.
       try {
+        const triggerMigration = _.get(connection, 'triggerMigration', false);
         // Try to require from local dependency.
-        const connection = require('knex')(options);
-        _.set(strapi, `connections.${name}`, connection);
+        const knexConnection = require('knex')(options);
+        if (triggerMigration === true) {
+          await knexConnection.migrate.up();
+        }
+        _.set(strapi, `connections.${name}`, knexConnection);
+        return knexConnection;
       } catch (err) {
         strapi.log.error('Impossible to use the `' + name + '` connection...');
         strapi.log.warn(
@@ -184,6 +189,6 @@ module.exports = strapi => {
         strapi.log.error(err);
         strapi.stop();
       }
-    }
+    })
   );
 };
