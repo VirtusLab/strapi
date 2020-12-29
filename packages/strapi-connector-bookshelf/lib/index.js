@@ -35,8 +35,8 @@ const defaults = {
 const isBookshelfConnection = ({ connector }) => connector === 'bookshelf';
 
 module.exports = function(strapi) {
-  function initialize() {
-    initKnex(strapi);
+  async function initialize() {
+    await initKnex(strapi);
 
     const { connections } = strapi.config;
     const GLOBALS = {};
