@@ -17,6 +17,7 @@ import Name from './Name';
 import Wrapper from './Wrapper';
 import Input from '../Input';
 import ErrorMessage from './ErrorMessage';
+import ConfigProvider from '../../providers/ConfigProvider';
 
 const InputMedia = ({ disabled, label, onChange, name, attribute, value, type, id, error }) => {
   const [modal, setModal] = useState({
@@ -117,76 +118,78 @@ const InputMedia = ({ disabled, label, onChange, name, attribute, value, type, i
   };
 
   return (
-    <Wrapper hasError={!isEmpty(error)}>
-      <Name htmlFor={name}>{`${label}${displaySlidePagination}`}</Name>
+    <ConfigProvider>
+      <Wrapper hasError={!isEmpty(error)}>
+        <Name htmlFor={name}>{`${label}${displaySlidePagination}`}</Name>
 
-      <CardPreviewWrapper onDragOver={handleAllowDrop} onDrop={handleDrop}>
-        <CardControlWrapper>
-          {!disabled && (
-            <CardControl
-              small
-              title="add"
-              color="#9EA7B8"
-              type="plus"
-              onClick={handleClickToggleModal}
-            />
-          )}
-          {!hasNoValue && !disabled && (
-            <>
-              <CheckPermissions permissions={pluginPermissions.update}>
-                <CardControl
-                  small
-                  title="edit"
-                  color="#9EA7B8"
-                  type="pencil"
-                  onClick={handleEditFile}
-                />
-              </CheckPermissions>
-              <CheckPermissions permissions={pluginPermissions.copyLink}>
-                <CopyToClipboard onCopy={handleCopy} text={prefixedFileURL}>
-                  <CardControl small title="copy-link" color="#9EA7B8" type="link" />
-                </CopyToClipboard>
-              </CheckPermissions>
+        <CardPreviewWrapper onDragOver={handleAllowDrop} onDrop={handleDrop}>
+          <CardControlWrapper>
+            {!disabled && (
               <CardControl
                 small
-                title="delete"
+                title="add"
                 color="#9EA7B8"
-                type="trash-alt"
-                onClick={handleRemoveFile}
+                type="plus"
+                onClick={handleClickToggleModal}
               />
-            </>
+            )}
+            {!hasNoValue && !disabled && (
+              <>
+                <CheckPermissions permissions={pluginPermissions.update}>
+                  <CardControl
+                    small
+                    title="edit"
+                    color="#9EA7B8"
+                    type="pencil"
+                    onClick={handleEditFile}
+                  />
+                </CheckPermissions>
+                <CheckPermissions permissions={pluginPermissions.copyLink}>
+                  <CopyToClipboard onCopy={handleCopy} text={prefixedFileURL}>
+                    <CardControl small title="copy-link" color="#9EA7B8" type="link" />
+                  </CopyToClipboard>
+                </CheckPermissions>
+                <CardControl
+                  small
+                  title="delete"
+                  color="#9EA7B8"
+                  type="trash-alt"
+                  onClick={handleRemoveFile}
+                />
+              </>
+            )}
+          </CardControlWrapper>
+          {hasNoValue ? (
+            <EmptyInputMedia onClick={handleClickToggleModal} disabled={disabled}>
+              <IconUpload />
+              <EmptyText id={getTrad('input.placeholder')} />
+            </EmptyInputMedia>
+          ) : (
+            <InputFilePreview
+              isSlider={attribute.multiple && value.length > 1}
+              file={currentFile}
+              onClick={handleFilesNavigation}
+            />
           )}
-        </CardControlWrapper>
-        {hasNoValue ? (
-          <EmptyInputMedia onClick={handleClickToggleModal} disabled={disabled}>
-            <IconUpload />
-            <EmptyText id={getTrad('input.placeholder')} />
-          </EmptyInputMedia>
-        ) : (
-          <InputFilePreview
-            isSlider={attribute.multiple && value.length > 1}
-            file={currentFile}
-            onClick={handleFilesNavigation}
+          <Input type="file" name={name} />
+        </CardPreviewWrapper>
+        {modal.isDisplayed && (
+          <InputModalStepper
+            isOpen={modal.isOpen}
+            onClosed={handleClosed}
+            step={modal.step}
+            fileToEdit={modal.fileToEdit}
+            filesToUpload={modal.filesToUpload}
+            multiple={attribute.multiple}
+            onInputMediaChange={handleChange}
+            selectedFiles={value}
+            onToggle={handleClickToggleModal}
+            allowedTypes={attribute.allowedTypes}
           />
         )}
-        <Input type="file" name={name} />
-      </CardPreviewWrapper>
-      {modal.isDisplayed && (
-        <InputModalStepper
-          isOpen={modal.isOpen}
-          onClosed={handleClosed}
-          step={modal.step}
-          fileToEdit={modal.fileToEdit}
-          filesToUpload={modal.filesToUpload}
-          multiple={attribute.multiple}
-          onInputMediaChange={handleChange}
-          selectedFiles={value}
-          onToggle={handleClickToggleModal}
-          allowedTypes={attribute.allowedTypes}
-        />
-      )}
-      {error && <ErrorMessage id={errorId}>{error}</ErrorMessage>}
-    </Wrapper>
+        {error && <ErrorMessage id={errorId}>{error}</ErrorMessage>}
+      </Wrapper>
+    </ConfigProvider>
   );
 };
 
