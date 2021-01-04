@@ -60,11 +60,11 @@ const EditForm = forwardRef(
     const [src, setSrc] = useState(null);
     const cacheRef = useRef(performance.now());
 
-    const { cacheBraking } = useConfigContext();
+    const { cacheBreaking } = useConfigContext();
 
     const fileURL = get(fileToEdit, ['file', 'url'], null);
     const prefixedFileURL = fileURL
-      ? prefixFileUrlWithBackendUrl(`${fileURL}${cacheBraking ? `?${cacheRef.current}` : ''}`)
+      ? prefixFileUrlWithBackendUrl(`${fileURL}${cacheBreaking ? `?${cacheRef.current}` : ''}`)
       : null;
     const downloadFileName = createFileToDownloadName(fileToEdit);
     const mimeType =

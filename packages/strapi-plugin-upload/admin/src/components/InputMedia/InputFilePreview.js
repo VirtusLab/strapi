@@ -7,8 +7,11 @@ import CardPreview from '../CardPreview';
 import Flex from '../Flex';
 import Chevron from './Chevron';
 
+import { useConfigContext } from '../../hooks';
+
 const InputFilePreview = ({ file, onClick, isSlider }) => {
   const fileUrl = prefixFileUrlWithBackendUrl(get(file, ['formats', 'small', 'url'], file.url));
+  const { cacheBreaking } = useConfigContext();
 
   return (
     <Flex
@@ -18,7 +21,7 @@ const InputFilePreview = ({ file, onClick, isSlider }) => {
       justifyContent="space-between"
     >
       {isSlider && <Chevron side="left" onClick={() => onClick(false)} />}
-      <CardPreview hasIcon url={fileUrl} type={file.mime} />
+      <CardPreview hasIcon url={fileUrl} type={file.mime} withFileCaching={cacheBreaking} />
       {isSlider && <Chevron side="right" onClick={() => onClick(true)} />}
     </Flex>
   );
