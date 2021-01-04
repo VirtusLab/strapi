@@ -24,7 +24,7 @@ const List = ({
   showCheckbox,
 }) => {
   const selectedAssets = selectedItems.length;
-  const { cacheBraking } = useConfigContext();
+  const { cacheBreaking } = useConfigContext();
 
   const handleCheckboxClick = e => {
     e.stopPropagation();
@@ -57,7 +57,7 @@ const List = ({
                 url={fileUrl}
                 onClick={onCardClick}
                 small={smallCards}
-                withFileCaching={!!cacheBraking}
+                withFileCaching={cacheBreaking}
               >
                 {(checked || canSelect) && (
                   <>
