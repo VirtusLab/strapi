@@ -19,12 +19,14 @@ module.exports = async function({ browser }) {
   const adminPort = config.get('server.admin.port', 8000);
   const adminHost = config.get('server.admin.host', 'localhost');
   const adminWatchIgnoreFiles = config.get('server.admin.watchIgnoreFiles', []);
+  const monorepoConfig = config.get('custom.monorepo', {});
 
   strapiAdmin.watchAdmin({
     dir,
     port: adminPort,
     host: adminHost,
     browser,
+    monorepoConfig,
     options: {
       backend: getAbsoluteServerUrl(config, true),
       publicPath: addSlash(adminPath),
