@@ -301,14 +301,15 @@ describe('Role', () => {
       expect(count).toHaveBeenCalledWith(params);
     });
   });
-  describe('createRolesIfNoneExist', () => {
+  describe('applyConfigurationRoles', () => {
     test("Don't create roles if one already exist", async () => {
       const count = jest.fn(() => Promise.resolve(1));
       const create = jest.fn();
+      const findOne = jest.fn(() => Promise.resolve({}));
       global.strapi = {
-        query: () => ({ count, create }),
+        query: () => ({ count, create, findOne }),
       };
-      await roleService.createRolesIfNoneExist();
+      await roleService.applyConfigurationRoles();
 
       expect(create).toHaveBeenCalledTimes(0);
     });
@@ -368,10 +369,11 @@ describe('Role', () => {
       const getAll = jest.fn(() => actions);
       const createMany = jest.fn();
       const assignARoleToAll = jest.fn();
-      const getPermissionsWithNestedFields = jest.fn(() => [...permissions]); // cloned, otherwise it is modified inside createRolesIfNoneExist()
+      const getPermissionsWithNestedFields = jest.fn(() => [...permissions]); // cloned, otherwise it is modified inside applyConfigurationRoles()
+      const findOne = jest.fn(() => Promise.resolve());
 
       global.strapi = {
-        query: () => ({ count, create }),
+        query: () => ({ count, create, findOne }),
         admin: {
           services: {
             permission: { actionProvider: { getAll }, createMany },
@@ -380,7 +382,7 @@ describe('Role', () => {
           },
         },
       };
-      await roleService.createRolesIfNoneExist();
+      await roleService.applyConfigurationRoles();
 
       expect(create).toHaveBeenCalledTimes(3);
       expect(create).toHaveBeenNthCalledWith(1, {
