@@ -201,57 +201,85 @@ const getSuperAdmin = () => findOne({ code: SUPER_ADMIN_CODE });
  */
 const getSuperAdminWithUsersCount = () => findOneWithUsersCount({ code: SUPER_ADMIN_CODE });
 
+const refreshConfigRoles = existRoles =>
+  Promise.all(
+    existRoles.map(async role => {
+      const existRole = await findOne({ code: role.code });
+      if (role.force && existRole) {
+        await deleteByIds([existRole.id]);
+      }
+      if (!role.force && existRole) {
+        return { ...role, ...existRole };
+      }
+      const newRole = await create(role);
+      return {
+        ...role,
+        ...newRole,
+        force: role.force,
+        isNew: true,
+      };
+    })
+  );
+
 /** Create superAdmin, Author and Editor role is no role already exist
  * @returns {Promise<>}
  */
-const createRolesIfNoneExist = async () => {
-  const someRolesExist = await exists();
-  if (someRolesExist) {
-    return;
-  }
-
-  const allActions = strapi.admin.services.permission.actionProvider.getAll();
-  const contentTypesActions = allActions.filter(a => a.section === 'contentTypes');
-
-  // create 3 roles
-  const superAdminRole = await create({
-    name: 'Super Admin',
-    code: 'strapi-super-admin',
-    description: 'Super Admins can access and manage all features and settings.',
-  });
-
-  await strapi.admin.services.user.assignARoleToAll(superAdminRole.id);
-
-  const editorRole = await create({
-    name: 'Editor',
-    code: 'strapi-editor',
-    description: 'Editors can manage and publish contents including those of other users.',
-  });
-
-  const authorRole = await create({
-    name: 'Author',
-    code: 'strapi-author',
-    description: 'Authors can manage the content they have created.',
-  });
-
-  // create content-type permissions for each role
-  const editorPermissions = strapi.admin.services['content-type'].getPermissionsWithNestedFields(
-    contentTypesActions,
+const applyConfigurationRoles = async () => {
+  const commonRoles = [
     {
-      restrictedSubjects: ['plugins::users-permissions.user'],
-    }
+      name: 'Super Admin',
+      code: 'strapi-super-admin',
+      description: 'Super Admins can access and manage all features and settings.',
+    },
+    {
+      name: 'Editor',
+      code: 'strapi-editor',
+      description: 'Editors can manage and publish contents including those of other users.',
+    },
+    {
+      name: 'Author',
+      code: 'strapi-author',
+      description: 'Authors can manage the content they have created.',
+    },
+  ];
+  const configRoles = [...commonRoles, ..._.get(strapi.config, 'roles', [])];
+
+  const [superAdminRole, editorRole, authorRole, ...restRoles] = await refreshConfigRoles(
+    configRoles
   );
 
-  const authorPermissions = editorPermissions
-    .filter(({ action }) => action !== ACTIONS.publish)
-    .map(set('conditions', ['admin::is-creator']));
+  await Promise.all(restRoles.map(role => assignPermissions(role.id, role.permissions)));
 
-  editorPermissions.push(...getDefaultPluginPermissions());
-  authorPermissions.push(...getDefaultPluginPermissions({ isAuthor: true }));
+  if (superAdminRole.isNew) {
+    await strapi.admin.services.user.assignARoleToAll(superAdminRole.id);
+  }
 
-  // assign permissions to roles
-  await addPermissions(editorRole.id, editorPermissions);
-  await addPermissions(authorRole.id, authorPermissions);
+  if (editorRole.isNew || authorRole.isNew) {
+    const allActions = strapi.admin.services.permission.actionProvider.getAll();
+    const contentTypesActions = allActions.filter(a => a.section === 'contentTypes');
+    // create content-type permissions for each role
+    const editorPermissions = strapi.admin.services['content-type'].getPermissionsWithNestedFields(
+      contentTypesActions,
+      {
+        restrictedSubjects: ['plugins::users-permissions.user'],
+      }
+    );
+
+    const authorPermissions = editorPermissions
+      .filter(({ action }) => action !== ACTIONS.publish)
+      .map(set('conditions', ['admin::is-creator']));
+
+    editorPermissions.push(...getDefaultPluginPermissions());
+    authorPermissions.push(...getDefaultPluginPermissions({ isAuthor: true }));
+
+    if (editorRole.isNew) {
+      // assign permissions to roles
+      await addPermissions(editorRole.id, editorPermissions);
+    }
+    if (authorRole.isNew) {
+      await addPermissions(authorRole.id, authorPermissions);
+    }
+  }
 };
 
 const getDefaultPluginPermissions = ({ isAuthor = false } = {}) => {
@@ -388,7 +416,7 @@ module.exports = {
   getUsersCount,
   getSuperAdmin,
   getSuperAdminWithUsersCount,
-  createRolesIfNoneExist,
+  applyConfigurationRoles,
   displayWarningIfNoSuperAdmin,
   addPermissions,
   assignPermissions,
