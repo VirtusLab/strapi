@@ -8,6 +8,8 @@ import CardControlsWrapper from '../CardControlsWrapper';
 import ListWrapper from '../ListWrapper';
 import CardControl from '../CardControl';
 
+import { useConfigContext } from '../../hooks';
+
 const SortableList = ({
   allowedActions,
   canSelect,
@@ -21,6 +23,7 @@ const SortableList = ({
   const handleClick = e => {
     e.stopPropagation();
   };
+  const { cacheBreaking } = useConfigContext();
 
   return (
     <ListWrapper small>
@@ -44,6 +47,7 @@ const SortableList = ({
                 moveAsset={moveAsset}
                 isDraggable
                 index={index}
+                withFileCaching={cacheBreaking}
               >
                 {(checked || canSelect) && (
                   <CardControlsWrapper leftAlign displayed className="card-control-wrapper">
