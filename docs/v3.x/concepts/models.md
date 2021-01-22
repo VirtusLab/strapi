@@ -175,7 +175,8 @@ The options key on the model-json states.
   "options": {
     "timestamps": true,
     "privateAttributes": ["id", "created_at"],
-    "populateCreatorFields": true
+    "populateCreatorFields": true,
+    "isManaged": true
   }
 }
 ```

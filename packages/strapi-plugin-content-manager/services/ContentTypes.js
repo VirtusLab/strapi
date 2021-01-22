@@ -61,6 +61,7 @@ const formatContentType = contentType => {
     apiID: contentType.modelName,
     label: formatContentTypeLabel(contentType),
     isDisplayed: HIDDEN_CONTENT_TYPES.includes(contentType.uid) ? false : true,
+    isManaged: _.get(contentType, 'options.isManaged', true),
     schema: {
       ...formatContentTypeSchema(contentType),
       kind: contentType.kind || 'collectionType',
