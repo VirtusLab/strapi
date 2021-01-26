@@ -10,6 +10,7 @@ import ListWrapper from '../ListWrapper';
 import IntlText from '../IntlText';
 import ListCell from './ListCell';
 import ListRow from './ListRow';
+import { useConfigContext } from '../../hooks';
 
 const List = ({
   allowedTypes,
@@ -23,6 +24,7 @@ const List = ({
   showCheckbox,
 }) => {
   const selectedAssets = selectedItems.length;
+  const { cacheBraking } = useConfigContext();
 
   const handleCheckboxClick = e => {
     e.stopPropagation();
@@ -55,6 +57,7 @@ const List = ({
                 url={fileUrl}
                 onClick={onCardClick}
                 small={smallCards}
+                withFileCaching={!!cacheBraking}
               >
                 {(checked || canSelect) && (
                   <>

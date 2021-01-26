@@ -36,9 +36,11 @@ module.exports = {
   destroy: resolveControllerMethod('destroy'),
   updateSettings: resolveControllerMethod('updateSettings'),
   getSettings: resolveControllerMethod('getSettings'),
+  getUploadConfig: resolveControllerMethod('getUploadConfig'),
 
   async upload(ctx) {
-    const isUploadDisabled = _.get(strapi.plugins, 'upload.config.enabled', true) === false;
+    const isUploadDisabled =
+      strapi.plugins.upload.services.upload.getPluginConfig().enabled === false;
 
     if (isUploadDisabled) {
       throw strapi.errors.badRequest(null, {
@@ -47,9 +49,26 @@ module.exports = {
     }
 
     const {
+      supportFormat,
+      supportFormatOptions,
+    } = await strapi.plugins.upload.services.upload.getSettings();
+
+    const {
       query: { id },
       request: { files: { files } = {} },
     } = ctx;
+
+    if (files) {
+      const condition = supportFormatOptions
+        .filter(({ label }) => supportFormat.includes(label))
+        .some(({ regex }) => new RegExp(regex).test(files.type));
+      if (!condition) {
+        throw strapi.errors.badRequest(null, {
+          errors: [{ id: 'Upload.format.notSupported', message: 'File format is not supported.' }],
+        });
+      }
+    }
+
     const controller = resolveController(ctx);
 
     if (id && (_.isEmpty(files) || files.size === 0)) {

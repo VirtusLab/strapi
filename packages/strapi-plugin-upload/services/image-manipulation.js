@@ -82,10 +82,16 @@ const optimize = async buffer => {
     .catch(() => ({ buffer }));
 };
 
-const BREAKPOINTS = {
-  large: 1000,
-  medium: 750,
-  small: 500,
+const getBreakPoints = () => {
+  const config = strapi.plugins.upload.services.upload.getPluginConfig();
+  if (config.breakpoints) {
+    return config.breakpoints;
+  }
+  return {
+    large: 1000,
+    medium: 750,
+    small: 500,
+  };
 };
 
 const generateResponsiveFormats = async file => {
@@ -100,10 +106,10 @@ const generateResponsiveFormats = async file => {
   }
 
   const originalDimensions = await getDimensions(file.buffer);
-
+  const breakpoints = getBreakPoints();
   return Promise.all(
-    Object.keys(BREAKPOINTS).map(key => {
-      const breakpoint = BREAKPOINTS[key];
+    Object.keys(breakpoints).map(key => {
+      const breakpoint = breakpoints[key];
 
       if (breakpointSmallerThan(breakpoint, originalDimensions)) {
         return generateBreakpoint(key, { file, breakpoint, originalDimensions });
@@ -143,10 +149,17 @@ const breakpointSmallerThan = (breakpoint, { width, height }) => {
   return breakpoint < width || breakpoint < height;
 };
 
-const formatsToProccess = ['jpeg', 'png', 'webp', 'tiff'];
+const getSupportImagesFormat = () => {
+  const config = strapi.plugins.upload.services.upload.getPluginConfig();
+  if (config.supportImagesTypes) {
+    return config.supportImagesTypes;
+  }
+  return ['jpeg', 'png', 'webp', 'tiff'];
+};
+
 const canBeProccessed = async buffer => {
   const { format } = await getMetadatas(buffer);
-  return format && formatsToProccess.includes(format);
+  return format && getSupportImagesFormat().includes(format);
 };
 
 module.exports = {

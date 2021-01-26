@@ -31,6 +31,7 @@ import {
   getYupInnerErrors,
   removePasswordFieldsFromData,
 } from './utils';
+import { resetHiddenFields } from '../../utils/conditionalLogic';
 
 const getRequestUrl = path => `/${pluginId}/explorer/${path}`;
 
@@ -411,7 +412,7 @@ const EditViewDataManagerProvider = ({
       // Remove keys that are not needed
       // Clean relations
       const cleanedData = cleanData(
-        cloneDeep(modifiedData),
+        cloneDeep(resetHiddenFields(currentContentTypeLayout, modifiedData)),
         currentContentTypeLayout,
         allLayoutData.components
       );

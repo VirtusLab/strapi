@@ -40,6 +40,7 @@ const DynamicZone = ({
   moveComponentDown,
   removeComponentFromDynamicZone,
   dynamicDisplayedComponents,
+  conditionallyHidden,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -121,6 +122,10 @@ const DynamicZone = ({
   const hasRequiredError = hasError && !hasMinError;
   const hasMaxError =
     hasError && get(dynamicZoneErrors, [0, 'id'], '') === 'components.Input.error.validation.max';
+
+  if (conditionallyHidden) {
+    return null;
+  }
 
   if (!isFieldAllowed && isCreatingEntry) {
     return (
@@ -295,6 +300,7 @@ DynamicZone.propTypes = {
   min: PropTypes.number,
   name: PropTypes.string.isRequired,
   removeComponentFromDynamicZone: PropTypes.func.isRequired,
+  conditionallyHidden: PropTypes.bool.isRequired,
 };
 
 const Memoized = memo(DynamicZone, isEqual);

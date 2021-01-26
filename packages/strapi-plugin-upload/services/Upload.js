@@ -89,7 +89,9 @@ module.exports = {
   async enhanceFile(file, fileInfo = {}, metas = {}) {
     let readBuffer;
     try {
-      readBuffer = await util.promisify(fs.readFile)(file.path);
+      readBuffer = file.isStream
+        ? file.stream.toBuffer()
+        : await util.promisify(fs.readFile)(file.path);
     } catch (e) {
       if (e.code === 'ERR_FS_FILE_TOO_LARGE') {
         throw strapi.errors.entityTooLarge('FileTooBig', {
@@ -142,7 +144,7 @@ module.exports = {
   },
 
   async uploadFileAndPersist(fileData, { user } = {}) {
-    const config = strapi.plugins.upload.config;
+    const config = this.getPluginConfig();
 
     const {
       getDimensions,
@@ -203,7 +205,7 @@ module.exports = {
   },
 
   async replace(id, { data, file }, { user } = {}) {
-    const config = strapi.plugins.upload.config;
+    const config = this.getPluginConfig();
 
     const {
       getDimensions,
@@ -327,7 +329,7 @@ module.exports = {
   },
 
   async remove(file) {
-    const config = strapi.plugins.upload.config;
+    const config = this.getPluginConfig();
 
     // execute delete function of the provider
     if (file.provider === config.provider) {
@@ -398,5 +400,9 @@ module.exports = {
         key: 'settings',
       })
       .set({ value });
+  },
+
+  getPluginConfig() {
+    return _.get(strapi.plugins, 'upload.config', {});
   },
 };

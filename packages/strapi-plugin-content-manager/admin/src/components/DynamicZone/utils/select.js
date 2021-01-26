@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { get } from 'lodash';
 import useDataManager from '../../../hooks/useDataManager';
+import { isFieldVisible } from '../../../utils/conditionalLogic';
 
 function useSelect(name) {
   const {
@@ -34,6 +35,14 @@ function useSelect(name) {
     return allowedFields.includes(name);
   }, [name, isCreatingEntry, readActionAllowedFields]);
 
+  const conditionallyHidden = useMemo(() => {
+    return !isFieldVisible({
+      layout,
+      key: name,
+      modifiedData,
+    });
+  }, [modifiedData, layout, name]);
+
   return {
     addComponentToDynamicZone,
     formErrors,
@@ -45,6 +54,7 @@ function useSelect(name) {
     moveComponentDown,
     removeComponentFromDynamicZone,
     dynamicDisplayedComponents,
+    conditionallyHidden,
   };
 }
 

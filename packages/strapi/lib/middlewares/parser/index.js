@@ -2,7 +2,7 @@
 
 const body = require('koa-body');
 const qs = require('qs');
-const { omit } = require('lodash');
+const { omit, get } = require('lodash');
 
 /**
  * Body parser hook
@@ -37,10 +37,19 @@ module.exports = strapi => {
      * Initialize the hook
      */
     initialize() {
+      const configUploadConfig = get(strapi.plugins, 'upload.config', {});
       strapi.app.use(async (ctx, next) => {
         // disable for graphql
         // TODO: find a better way later
         if (ctx.url === '/graphql') {
+          return next();
+        }
+        // we can parse req only once, if we have enabled streams we don't need koa-body middleware on this endpoint
+        if (
+          configUploadConfig.streams === true &&
+          ctx.url === '/upload' &&
+          ctx.method.toLowerCase() === 'post'
+        ) {
           return next();
         }
 
