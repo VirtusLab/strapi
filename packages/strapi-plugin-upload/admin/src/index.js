@@ -18,6 +18,7 @@ import InputModalStepper from './containers/InputModalStepper';
 import trads from './translations';
 import pluginId from './pluginId';
 import { getTrad } from './utils';
+import ConfigProvider from './providers/ConfigProvider';
 
 export default strapi => {
   const pluginDescription = pluginPkg.strapi.description || pluginPkg.description;
@@ -78,7 +79,15 @@ export default strapi => {
     },
   };
 
-  strapi.registerComponent({ name: 'media-library', Component: InputModalStepper });
+  // added this hack because InputModalStepper was wrapped in ConfigProvider in another path
+  // to prevent duplicate providers
+  const InputModalStepperWrapper = props => (
+    <ConfigProvider>
+      <InputModalStepper {...props} />
+    </ConfigProvider>
+  );
+
+  strapi.registerComponent({ name: 'media-library', Component: InputModalStepperWrapper });
   strapi.registerField({ type: 'media', Component: InputMedia });
 
   return strapi.registerPlugin(plugin);
