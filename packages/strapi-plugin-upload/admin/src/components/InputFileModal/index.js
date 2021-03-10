@@ -7,10 +7,12 @@ import Cloud from '../../icons/Cloud';
 import Label from './Label';
 import Input from '../Input';
 import P from './P';
+import { useConfigContext } from '../../hooks';
 
 const InputFileModal = ({ name, onChange }) => {
   const [isDragging, setIsDragging] = useState(false);
   const { formatMessage } = useGlobalContext();
+  const { input } = useConfigContext();
   const ref = createRef();
 
   const handleAllowDrop = e => e.preventDefault();
@@ -54,7 +56,14 @@ const InputFileModal = ({ name, onChange }) => {
       <Button type="button" id="button" name="button" color="primary" onClick={handleClick}>
         {formatMessage({ id: getTrad('input.button.label') })}
       </Button>
-      <Input ref={ref} type="file" multiple name={name} onChange={handleChange} />
+      <Input
+        ref={ref}
+        type="file"
+        accept={input.accept.join(',')}
+        multiple
+        name={name}
+        onChange={handleChange}
+      />
       {isDragging && <div className="dragzone" onDragLeave={handleDragLeave} />}
     </Label>
   );
