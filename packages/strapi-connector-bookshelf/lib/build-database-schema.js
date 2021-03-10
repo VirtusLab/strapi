@@ -120,18 +120,10 @@ const isColumn = ({ definition, attribute, name }) => {
 
     if (!relation) return false;
 
-    if (['oneToOne', 'manyToOne', 'oneWay'].includes(relation.nature)) {
-      return true;
-    }
-
-    return false;
+    return ['oneToOne', 'manyToOne', 'oneWay'].includes(relation.nature);
   }
 
-  if (['component', 'dynamiczone'].includes(attribute.type)) {
-    return false;
-  }
-
-  return true;
+  return !['component', 'dynamiczone'].includes(attribute.type);
 };
 
 const uniqueColName = (table, key) => `${table}_${key}_unique`;
@@ -161,9 +153,26 @@ const buildColType = ({ name, attribute, table, tableExists = false, definition,
 
   switch (attribute.type) {
     case 'uuid':
+      if (attribute.constraints) {
+        table.unique([
+          name,
+          ...(Array.isArray(attribute.constraints)
+            ? attribute.constraints
+            : [attribute.constraints]),
+        ]);
+      }
       return table.uuid(name);
     case 'uid': {
-      table.unique(name);
+      if (attribute.constraints) {
+        table.unique([
+          name,
+          ...(Array.isArray(attribute.constraints)
+            ? attribute.constraints
+            : [attribute.constraints]),
+        ]);
+      } else {
+        table.unique(name);
+      }
       return table.string(name);
     }
     case 'richtext':
@@ -175,8 +184,24 @@ const buildColType = ({ name, attribute, table, tableExists = false, definition,
     case 'string':
     case 'password':
     case 'email':
+      if (attribute.constraints) {
+        table.unique([
+          name,
+          ...(Array.isArray(attribute.constraints)
+            ? attribute.constraints
+            : [attribute.constraints]),
+        ]);
+      }
       return table.string(name);
     case 'integer':
+      if (attribute.constraints) {
+        table.unique([
+          name,
+          ...(Array.isArray(attribute.constraints)
+            ? attribute.constraints
+            : [attribute.constraints]),
+        ]);
+      }
       return table.integer(name);
     case 'biginteger':
       return table.bigInteger(name);
