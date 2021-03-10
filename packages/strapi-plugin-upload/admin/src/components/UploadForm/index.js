@@ -56,6 +56,9 @@ UploadForm.propTypes = {
   formErrors: PropTypes.object,
   onChange: PropTypes.func,
   setShouldDisplayNextButton: PropTypes.func,
+  inputConfig: PropTypes.shape({
+    accept: PropTypes.arrayOf(PropTypes.string).isRequired,
+  }).isRequired,
 };
 
 export default UploadForm;

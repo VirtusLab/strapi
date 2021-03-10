@@ -234,7 +234,7 @@ async function createCacheDir(dir) {
   );
 }
 
-async function watchAdmin({ dir, host, port, browser, options }) {
+async function watchAdmin({ dir, host, port, browser, options, monorepoConfig }) {
   // Create the cache dir containing the front-end files.
   await createCacheDir(dir);
 
@@ -274,10 +274,10 @@ async function watchAdmin({ dir, host, port, browser, options }) {
     console.log(chalk.green(`Admin development at http://${host}:${port}${opts.publicPath}`));
   });
 
-  watchFiles(dir, options.watchIgnoreFiles);
+  watchFiles(dir, options.watchIgnoreFiles, monorepoConfig);
 }
 
-async function watchFiles(dir, ignoreFiles = []) {
+async function watchFiles(dir, ignoreFiles = [], { rootNodeModules } = {}) {
   const cacheDir = path.join(dir, '.cache');
   const pkgJSON = require(path.join(dir, 'package.json'));
   const admin = path.join(dir, 'admin');
@@ -292,8 +292,21 @@ async function watchFiles(dir, ignoreFiles = []) {
     path.join(extensionsPath, plugin.replace(/^strapi-plugin-/i, ''), 'admin')
   );
   const filesToWatch = [admin, ...pluginsToWatch];
-
-  const watcher = chokidar.watch(filesToWatch, {
+  let monorepoPackages = [];
+  if (rootNodeModules) {
+    monorepoPackages = _.uniq(
+      fs
+        .readdirSync(rootNodeModules)
+        .filter(_ => _.startsWith('strapi-'))
+        .filter(_ => {
+          const lStat = fs.lstatSync(path.resolve(rootNodeModules, _));
+          return lStat.isSymbolicLink();
+        })
+        .map(_ => path.resolve(rootNodeModules, _, 'admin'))
+        .filter(_ => fs.existsSync(_))
+    );
+  }
+  const watcher = chokidar.watch([...filesToWatch, ...monorepoPackages], {
     ignoreInitial: true,
     ignorePermissionErrors: true,
     ignored: [...ignoreFiles],
@@ -301,17 +314,32 @@ async function watchFiles(dir, ignoreFiles = []) {
 
   watcher.on('all', async (event, filePath) => {
     const isExtension = filePath.includes(extensionsPath);
-    const pluginName = isExtension ? filePath.replace(extensionsPath, '').split(path.sep)[1] : '';
+    const isLinkedPackage = rootNodeModules ? filePath.includes(rootNodeModules) : false;
 
-    const packageName = isExtension ? `strapi-plugin-${pluginName}` : 'strapi-admin';
+    let pluginName;
+    if (isExtension || isLinkedPackage) {
+      pluginName = filePath
+        .replace(isExtension ? extensionsPath : rootNodeModules, '')
+        .split(path.sep)[1];
+    } else {
+      pluginName = '';
+    }
 
-    const targetPath = isExtension
-      ? path.normalize(filePath.split(extensionsPath)[1].replace(pluginName, ''))
-      : path.normalize(filePath.split(admin)[1]);
-
-    const destFolder = isExtension
-      ? path.join(cacheDir, 'plugins', packageName)
-      : path.join(cacheDir, 'admin');
+    const packageName = isLinkedPackage
+      ? pluginName
+      : isExtension
+        ? `strapi-plugin-${pluginName}`
+        : 'strapi-admin';
+    let targetPath, destFolder;
+    if (isExtension || isLinkedPackage) {
+      targetPath = path.normalize(
+        filePath.split(isExtension ? extensionsPath : rootNodeModules)[1].replace(pluginName, '')
+      );
+      destFolder = path.join(cacheDir, 'plugins', packageName);
+    } else {
+      targetPath = path.normalize(filePath.split(admin)[1]);
+      destFolder = path.join(cacheDir, 'admin');
+    }
 
     if (event === 'unlink' || event === 'unlinkDir') {
       const originalFilePathInNodeModules = path.join(
@@ -330,7 +358,7 @@ async function watchFiles(dir, ignoreFiles = []) {
 
       // Check if the file or folder exists in node_modules
       // If so copy the old one
-      if (fs.pathExistsSync(path.resolve(originalFilePathInNodeModules))) {
+      if (!isLinkedPackage && fs.pathExistsSync(path.resolve(originalFilePathInNodeModules))) {
         try {
           await fs.copy(
             path.resolve(originalFilePathInNodeModules),

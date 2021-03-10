@@ -96,6 +96,7 @@
       "handler": "Components.createComponent",
       "config": {
       "policies": [
+          "plugins::content-type-builder.isNotProduction",
           ["admin::hasPermissions", ["plugins::content-type-builder.read"]]
         ]
       }
@@ -116,6 +117,7 @@
       "handler": "Components.deleteComponent",
       "config": {
       "policies": [
+          "plugins::content-type-builder.isNotProduction",
           ["admin::hasPermissions", ["plugins::content-type-builder.read"]]
         ]
       }
@@ -136,6 +138,7 @@
       "handler": "ComponentCategories.deleteCategory",
       "config": {
       "policies": [
+          "plugins::content-type-builder.isNotProduction",
           ["admin::hasPermissions", ["plugins::content-type-builder.read"]]
         ]
       }

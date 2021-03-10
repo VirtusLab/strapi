@@ -1,13 +1,15 @@
 import React, { useEffect, useReducer, useRef } from 'react';
+import Select from 'react-select';
 import { Header, Inputs } from '@buffetjs/custom';
 import { Helmet } from 'react-helmet';
 import { Text } from '@buffetjs/core';
 import { isEqual } from 'lodash';
 import { LoadingIndicatorPage, useGlobalContext, request } from 'strapi-helper-plugin';
+import Divider from './Divider';
 
 import { getRequestUrl, getTrad } from '../../utils';
 import SectionTitleWrapper from './SectionTitleWrapper';
-import Wrapper from './Wrapper';
+import Wrapper, { customStyles } from './Wrapper';
 import init from './init';
 import reducer, { initialState } from './reducer';
 
@@ -27,7 +29,18 @@ const SettingsPage = () => {
       if (isMounted.current) {
         dispatch({
           type: 'GET_DATA_SUCCEEDED',
-          data,
+          data: {
+            ...data,
+            supportFormat: (data.supportFormat || []).map(label => {
+              const value = data.supportFormatOptions.find(_ => _.label === label)?.regex;
+
+              return { label, value };
+            }),
+            supportFormatOptions: (data.supportFormatOptions || []).map(({ label, regex }) => ({
+              label,
+              value: regex,
+            })),
+          },
         });
       }
     } catch (err) {
@@ -46,10 +59,20 @@ const SettingsPage = () => {
   }, []);
 
   const handleSubmit = async () => {
+    const supportFormat = modifiedData.supportFormat || [];
+    const supportFormatOptions = modifiedData.supportFormatOptions || [];
+    const payload = {
+      ...modifiedData,
+      supportFormat: supportFormat.map(({ label }) => label),
+      supportFormatOptions: supportFormatOptions.map(({ label, value }) => ({
+        label,
+        regex: value,
+      })),
+    };
     try {
       await request(getRequestUrl('settings'), {
         method: 'PUT',
-        body: modifiedData,
+        body: payload,
       });
 
       if (isMounted.current) {
@@ -106,6 +129,14 @@ const SettingsPage = () => {
     });
   };
 
+  const onChangeSupportFormat = value => {
+    dispatch({
+      type: 'ON_CHANGE',
+      keys: 'supportFormat',
+      value,
+    });
+  };
+
   if (isLoading) {
     return <LoadingIndicatorPage />;
   }
@@ -117,6 +148,30 @@ const SettingsPage = () => {
       <Header {...headerProps} />
       <Wrapper>
         <div className="container-fluid">
+          <div className="row">
+            <SectionTitleWrapper className="col-12">
+              <Text fontSize="xs" fontWeight="semiBold" color="#787E8F">
+                {formatMessage({ id: getTrad('settings.section.common.label') })}
+              </Text>
+            </SectionTitleWrapper>
+            <div className="col-6">
+              <label htmlFor="support-formats">
+                {formatMessage({ id: getTrad('settings.form.supportFormats.label') })}
+              </label>
+              <section>
+                <Select
+                  isMulti
+                  id="support-formats"
+                  onChange={onChangeSupportFormat}
+                  options={modifiedData.supportFormatOptions}
+                  styles={customStyles}
+                  value={modifiedData.supportFormat}
+                />
+              </section>
+              <p>{formatMessage({ id: getTrad('settings.form.supportFormats.description') })}</p>
+            </div>
+          </div>
+          <Divider />
           <div className="row">
             <SectionTitleWrapper className="col-12">
               <Text fontSize="xs" fontWeight="semiBold" color="#787E8F">

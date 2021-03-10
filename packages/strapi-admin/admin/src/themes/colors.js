@@ -24,6 +24,7 @@ const colors = {
   grey: '#9ea7b8',
   greyDark: '#292b2c',
   greyAlpha: 'rgba(227, 233, 243, 0.5)',
+  greyDisabled: 'rgba(0, 0, 0, .15)',
   lightestBlue: '#e4f0fc',
   lightBlue: '#e6f0fb',
   mediumBlue: '#007eff',

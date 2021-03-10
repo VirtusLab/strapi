@@ -1,4 +1,5 @@
 import React, { useMemo, useCallback, useState } from 'react';
+import { FormattedMessage } from 'react-intl';
 import PropTypes from 'prop-types';
 import { get } from 'lodash';
 import { Checkbox, Flex, Text, Padded } from '@buffetjs/core';
@@ -32,6 +33,7 @@ const ContentTypeRow = ({ index, contentType, permissionsLayout }) => {
     components,
     isSuperAdmin,
   } = usePermissionsContext();
+  const { isManaged = true } = contentType;
   const isActive = collapsePath[0] === contentType.uid;
   const existingActions = useMemo(
     () => getAllAttributesActions(contentType.uid, contentTypesPermissions),
@@ -194,21 +196,21 @@ const ContentTypeRow = ({ index, contentType, permissionsLayout }) => {
 
   return (
     <RowWrapper withMargin={index % 2 !== 0}>
-      <StyledRow disabled={isSuperAdmin} isActive={isActive} isGrey={index % 2 === 0}>
+      <StyledRow disabled={isSuperAdmin || !isManaged} isActive={isActive} isGrey={index % 2 === 0}>
         <Flex style={{ flex: 1 }}>
           <Padded left size="sm" />
           <PermissionName disabled>
             <Checkbox
               onChange={handleAllContentTypeActions}
               name={contentType.info.name}
-              disabled={isSuperAdmin}
+              disabled={isSuperAdmin || !isManaged}
               someChecked={someChecked}
               value={allCurrentActionsSize === allActionsSize}
             />
             <CollapseLabel
               title={contentType.info.name}
               alignItems="center"
-              isCollapsable
+              isCollapsable={isManaged}
               onClick={handleToggleAttributes}
             >
               <Text
@@ -221,7 +223,19 @@ const ContentTypeRow = ({ index, contentType, permissionsLayout }) => {
               >
                 {contentType.info.name}
               </Text>
-              <Chevron icon={isActive ? 'chevron-up' : 'chevron-down'} />
+              {!isManaged && (
+                <Text
+                  color="grey"
+                  ellipsis
+                  fontSize="xs"
+                  fontWeight="bold"
+                  lineHeight="20px"
+                  style={{ marginLeft: '5px' }}
+                >
+                  (<FormattedMessage id="Settings.permissions.restricted" />)
+                </Text>
+              )}
+              {isManaged && <Chevron icon={isActive ? 'chevron-up' : 'chevron-down'} />}
             </CollapseLabel>
           </PermissionName>
           <PermissionWrapper disabled>
@@ -246,6 +260,13 @@ const ContentTypeRow = ({ index, contentType, permissionsLayout }) => {
               );
             })}
           </PermissionWrapper>
+          {isManaged && (
+            <ConditionsButton
+              isRight
+              hasConditions={subjectHasConditions}
+              onClick={handleModalOpen}
+            />
+          )}
           <ConditionsButton
             isRight
             hasConditions={subjectHasConditions}
