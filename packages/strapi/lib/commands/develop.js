@@ -1,6 +1,8 @@
 'use strict';
-
+const _ = require('lodash');
 const path = require('path');
+// eslint-disable-next-line node/no-extraneous-require
+const anymatch = require('anymatch');
 const cluster = require('cluster');
 const fs = require('fs-extra');
 const chokidar = require('chokidar');
@@ -114,30 +116,54 @@ function watchFileChanges({ dir, strapiInstance, watchIgnoreFiles, polling }) {
       strapiInstance.reload();
     }
   };
+  const { rootNodeModules } = _.get(strapiInstance, 'config.custom.monorepo', {});
+  let strapiPackages = [];
+  if (rootNodeModules) {
+    strapiPackages = _.uniq(
+      fs
+        .readdirSync(rootNodeModules)
+        .filter(_ => _.startsWith('strapi-'))
+        .filter(_ => {
+          const lStat = fs.lstatSync(path.resolve(rootNodeModules, _));
+          return lStat.isSymbolicLink();
+        })
+        .map(_ => path.resolve(rootNodeModules, _))
+    );
+  }
 
   const watcher = chokidar.watch(dir, {
     ignoreInitial: true,
-    usePolling: polling,
-    ignored: [
-      /(^|[/\\])\../, // dot files
-      /tmp/,
-      '**/admin',
-      '**/admin/**',
-      'extensions/**/admin',
-      'extensions/**/admin/**',
-      '**/documentation',
-      '**/documentation/**',
-      '**/node_modules',
-      '**/node_modules/**',
-      '**/plugins.json',
-      '**/index.html',
-      '**/public',
-      '**/public/**',
-      '**/*.db*',
-      '**/exports/**',
-      ...watchIgnoreFiles,
-    ],
+    ignored: (path, stats) => {
+      const ignored = [
+        /(^|[/\\])\../, // dot files
+        /tmp/,
+        '**/admin',
+        '**/admin/**',
+        'extensions/**/admin',
+        'extensions/**/admin/**',
+        '**/documentation',
+        '**/documentation/**',
+        '**/node_modules',
+        '**/node_modules/**',
+        '**/plugins.json',
+        '**/index.html',
+        '**/public',
+        '**/public/**',
+        '**/*.db*',
+        '**/exports/**',
+        ...watchIgnoreFiles,
+      ];
+      const root = strapiPackages.find(_ => path.includes(_));
+      if (root) {
+        const isIgnored =
+          path !== root &&
+          (path.includes('admin') || path.replace(root, '').includes('node_modules'));
+        return isIgnored;
+      }
+      return anymatch(ignored, undefined, { dot: true })([path, stats]);
+    },
   });
+  watcher.add(strapiPackages);
 
   watcher
     .on('add', path => {
