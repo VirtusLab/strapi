@@ -90,7 +90,9 @@ module.exports = {
   async enhanceFile(file, fileInfo = {}, metas = {}) {
     let readBuffer;
     try {
-      readBuffer = await util.promisify(fs.readFile)(file.path);
+      readBuffer = file.isStream
+        ? file.stream.toBuffer()
+        : await util.promisify(fs.readFile)(file.path);
     } catch (e) {
       if (e.code === 'ERR_FS_FILE_TOO_LARGE') {
         throw strapi.errors.entityTooLarge('FileTooBig', {
@@ -143,7 +145,7 @@ module.exports = {
   },
 
   async uploadFileAndPersist(fileData, { user } = {}) {
-    const config = strapi.plugins.upload.config;
+    const config = this.getPluginConfig();
 
     const {
       getDimensions,
@@ -153,24 +155,26 @@ module.exports = {
 
     await strapi.plugins.upload.provider.upload(fileData);
 
-    const thumbnailFile = await generateThumbnail(fileData);
-    if (thumbnailFile) {
-      await strapi.plugins.upload.provider.upload(thumbnailFile);
-      delete thumbnailFile.buffer;
-      _.set(fileData, 'formats.thumbnail', thumbnailFile);
-    }
+    if (config.uploadOnlyRootFile !== true) {
+      const thumbnailFile = await generateThumbnail(fileData);
+      if (thumbnailFile) {
+        await strapi.plugins.upload.provider.upload(thumbnailFile);
+        delete thumbnailFile.buffer;
+        _.set(fileData, 'formats.thumbnail', thumbnailFile);
+      }
 
-    const formats = await generateResponsiveFormats(fileData);
-    if (Array.isArray(formats) && formats.length > 0) {
-      for (const format of formats) {
-        if (!format) continue;
+      const formats = await generateResponsiveFormats(fileData);
+      if (Array.isArray(formats) && formats.length > 0) {
+        for (const format of formats) {
+          if (!format) continue;
 
-        const { key, file } = format;
+          const { key, file } = format;
 
-        await strapi.plugins.upload.provider.upload(file);
-        delete file.buffer;
+          await strapi.plugins.upload.provider.upload(file);
+          delete file.buffer;
 
-        _.set(fileData, ['formats', key], file);
+          _.set(fileData, ['formats', key], file);
+        }
       }
     }
 
@@ -204,7 +208,7 @@ module.exports = {
   },
 
   async replace(id, { data, file }, { user } = {}) {
-    const config = strapi.plugins.upload.config;
+    const config = this.getPluginConfig();
 
     const {
       getDimensions,
@@ -245,24 +249,26 @@ module.exports = {
     // clear old formats
     _.set(fileData, 'formats', {});
 
-    const thumbnailFile = await generateThumbnail(fileData);
-    if (thumbnailFile) {
-      await strapi.plugins.upload.provider.upload(thumbnailFile);
-      delete thumbnailFile.buffer;
-      _.set(fileData, 'formats.thumbnail', thumbnailFile);
-    }
+    if (config.uploadOnlyRootFile !== true) {
+      const thumbnailFile = await generateThumbnail(fileData);
+      if (thumbnailFile) {
+        await strapi.plugins.upload.provider.upload(thumbnailFile);
+        delete thumbnailFile.buffer;
+        _.set(fileData, 'formats.thumbnail', thumbnailFile);
+      }
 
-    const formats = await generateResponsiveFormats(fileData);
-    if (Array.isArray(formats) && formats.length > 0) {
-      for (const format of formats) {
-        if (!format) continue;
+      const formats = await generateResponsiveFormats(fileData);
+      if (Array.isArray(formats) && formats.length > 0) {
+        for (const format of formats) {
+          if (!format) continue;
 
-        const { key, file } = format;
+          const { key, file } = format;
 
-        await strapi.plugins.upload.provider.upload(file);
-        delete file.buffer;
+          await strapi.plugins.upload.provider.upload(file);
+          delete file.buffer;
 
-        _.set(fileData, ['formats', key], file);
+          _.set(fileData, ['formats', key], file);
+        }
       }
     }
 
@@ -328,7 +334,7 @@ module.exports = {
   },
 
   async remove(file) {
-    const config = strapi.plugins.upload.config;
+    const config = this.getPluginConfig();
 
     // execute delete function of the provider
     if (file.provider === config.provider) {
@@ -399,5 +405,8 @@ module.exports = {
         key: 'settings',
       })
       .set({ value });
+  },
+  getPluginConfig() {
+    return _.get(strapi.plugins, 'upload.config', {});
   },
 };

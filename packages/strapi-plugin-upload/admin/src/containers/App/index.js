@@ -6,6 +6,7 @@ import pluginPermissions from '../../permissions';
 import { AppContext } from '../../contexts';
 
 import HomePage from '../HomePage';
+import ConfigProvider from '../../providers/ConfigProvider';
 
 const App = () => {
   const state = useUserPermissions(pluginPermissions);
@@ -18,9 +19,11 @@ const App = () => {
   if (state.allowedActions.canMain) {
     return (
       <AppContext.Provider value={state}>
-        <Switch>
-          <Route path={`/plugins/${pluginId}`} component={HomePage} />
-        </Switch>
+        <ConfigProvider>
+          <Switch>
+            <Route path={`/plugins/${pluginId}`} component={HomePage} />
+          </Switch>
+        </ConfigProvider>
       </AppContext.Provider>
     );
   }
