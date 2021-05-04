@@ -6,7 +6,7 @@ const { features } = require('strapi/lib/utils/ee');
 const createLocalStrategy = require('../../services/passport/local-strategy');
 const sso = require('./passport/sso');
 
-const getPassportStrategies = () => {
+const getPassportStrategies = async () => {
   const localStrategy = createLocalStrategy(strapi);
 
   if (!features.isEnabled('sso')) {
@@ -18,7 +18,9 @@ const getPassportStrategies = () => {
   }
 
   const providers = sso.providerRegistry.getAll();
-  const strategies = providers.map(provider => provider.createStrategy(strapi));
+  const strategies = await Promise.all(
+    providers.map(async provider => await provider.createStrategy(strapi))
+  );
 
   return [localStrategy, ...strategies];
 };
