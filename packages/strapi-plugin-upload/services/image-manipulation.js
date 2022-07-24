@@ -151,10 +151,17 @@ const breakpointSmallerThan = (breakpoint, { width, height }) => {
   return breakpoint < width || breakpoint < height;
 };
 
-const formatsToProccess = ['jpeg', 'png', 'webp', 'tiff'];
+const getSupportImagesFormat = () => {
+  const config = strapi.plugins.upload.services.upload.getPluginConfig();
+  if (config.supportImagesTypes) {
+    return config.supportImagesTypes;
+  }
+  return ['jpeg', 'png', 'webp', 'tiff'];
+};
+
 const canBeProccessed = async buffer => {
   const { format } = await getMetadatas(buffer);
-  return format && formatsToProccess.includes(format);
+  return format && getSupportImagesFormat().includes(format);
 };
 
 module.exports = {

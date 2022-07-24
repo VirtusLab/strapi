@@ -40,8 +40,8 @@ module.exports = function(strapi) {
     isBookshelfConnection(connections[key])
   );
 
-  function initialize() {
-    initKnex(strapi);
+  async function initialize() {
+    await initKnex(strapi);
 
     const GLOBALS = {};
 

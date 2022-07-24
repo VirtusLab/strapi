@@ -188,6 +188,20 @@ module.exports = {
 
     ctx.body = pm.sanitize(uploadedFiles, { action: ACTIONS.read, withPrivate: false });
   },
+
+  async getUploadConfig(ctx) {
+    const data = await strapi.plugins.upload.services.upload.getSettings();
+    const config = strapi.plugins.upload.services.upload.getPluginConfig();
+
+    if (data.supportFormat) {
+      return (ctx.body = {
+        input: { accept: data.supportFormat },
+        ...(config.frontendOptions || {}),
+      });
+    }
+
+    ctx.body = { input: { types: ['*/*'] }, ...(config.frontendOptions || {}) };
+  },
 };
 
 const findEntityAndCheckPermissions = async (ability, action, model, id) => {

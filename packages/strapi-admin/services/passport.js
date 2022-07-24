@@ -30,11 +30,9 @@ const registerAuthEvents = () => {
   }
 };
 
-const init = () => {
-  strapi.admin.services.passport
-    .getPassportStrategies()
-    .forEach(strategy => passport.use(strategy));
-
+const init = async () => {
+  const strategies = await strapi.admin.services.passport.getPassportStrategies();
+  strategies.forEach(strategy => passport.use(strategy));
   registerAuthEvents();
 
   return passport.initialize();

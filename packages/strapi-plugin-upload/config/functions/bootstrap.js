@@ -14,14 +14,20 @@ module.exports = async () => {
 
   // if provider config does not exist set one by default
   const config = await configurator.get();
+  const defaults = {
+    sizeOptimization: true,
+    responsiveDimensions: true,
+    supportFormat: ['*/*'],
+    supportFormatOptions: [
+      { label: '*/*', regex: '.*' },
+      { label: 'audio/*', regex: 'audio/.*' },
+      { label: 'video/*', regex: 'video/.*' },
+      { label: 'image/*', regex: 'image/.*' },
+    ],
+  };
 
-  if (!config) {
-    await configurator.set({
-      value: {
-        sizeOptimization: true,
-        responsiveDimensions: true,
-      },
-    });
+  if (!config || (config && !(config.supportFormat && config.supportFormatOptions))) {
+    await configurator.set({ value: { ...defaults, ...config } });
   }
 
   await pruneObsoleteRelations();

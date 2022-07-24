@@ -1,8 +1,8 @@
 'use strict';
 
 module.exports = strapi => ({
-  initialize() {
-    const passportMiddleware = strapi.admin.services.passport.init();
+  async initialize() {
+    const passportMiddleware = await strapi.admin.services.passport.init();
 
     strapi.app.use(passportMiddleware);
 

@@ -46,6 +46,7 @@ const formatContentType = contentType => {
     uid,
     plugin,
     apiID: modelName,
+    isManaged: _.get(options, 'isManaged', true),
     schema: {
       name: getformattedName(contentType),
       description: _.get(info, 'description', ''),

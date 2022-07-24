@@ -2,7 +2,7 @@
 
 const body = require('koa-body');
 const qs = require('qs');
-const { omit } = require('lodash');
+const { omit, get } = require('lodash');
 
 /**
  * Body parser hook
@@ -38,9 +38,18 @@ module.exports = strapi => {
      */
     initialize() {
       strapi.app.use(async (ctx, next) => {
+        const configUploadConfig = get(strapi.plugins, 'upload.config', {});
         // disable for graphql
         // TODO: find a better way later
         if (ctx.url === '/graphql') {
+          return next();
+        }
+        // we can parse req only once, if we have enabled streams we don't need koa-body middleware on this endpoint
+        if (
+          configUploadConfig.streams === true &&
+          ctx.url.startsWith('/upload') &&
+          ctx.method.toLowerCase() === 'post'
+        ) {
           return next();
         }
 
@@ -51,7 +60,7 @@ module.exports = strapi => {
           })(ctx, next);
           return res;
         } catch (e) {
-          if (e.message.includes('maxFileSize exceeded')) {
+          if ((e || {}).message && e.message.includes('maxFileSize exceeded')) {
             throw strapi.errors.entityTooLarge('FileTooBig', {
               errors: [
                 {

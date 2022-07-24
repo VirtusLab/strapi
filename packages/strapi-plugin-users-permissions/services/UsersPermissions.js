@@ -254,13 +254,14 @@ module.exports = {
   async updatePermissions() {
     const { primaryKey } = strapi.query('permission', 'users-permissions');
     const roles = await strapi.query('role', 'users-permissions').find({}, []);
+    const policies = strapi.config['endpoint-policies'] || {};
     const rolesMap = roles.reduce((map, role) => ({ ...map, [role[primaryKey]]: role }), {});
 
     const dbPermissions = await strapi
       .query('permission', 'users-permissions')
       .find({ _limit: -1 });
     let permissionsFoundInDB = dbPermissions.map(
-      p => `${p.type}.${p.controller}.${p.action}.${p.role[primaryKey]}`
+      p => `${p.type}.${p.controller}.${p.action}.${p.role[primaryKey]}.${p.policy || ''}`
     );
     permissionsFoundInDB = _.uniq(permissionsFoundInDB);
 
@@ -294,17 +295,22 @@ module.exports = {
 
     // create permissions for each role
     let permissionsFoundInFiles = actionsFoundInFiles.reduce(
-      (acc, action) => [...acc, ...roles.map(role => `${action}.${role[primaryKey]}`)],
+      (acc, action) => [
+        ...acc,
+        ...roles.map(role => {
+          const policy = _.get(policies, `${action}.${role.type}`, '');
+          return `${action}.${role[primaryKey]}.${policy}`;
+        }),
+      ],
       []
     );
     permissionsFoundInFiles = _.uniq(permissionsFoundInFiles);
-
     // Compare to know if actions have been added or removed from controllers.
     if (!_.isEqual(permissionsFoundInDB.sort(), permissionsFoundInFiles.sort())) {
       const splitted = str => {
-        const [type, controller, action, roleId] = str.split('.');
+        const [type, controller, action, roleId, policy] = str.split('.');
 
-        return { type, controller, action, roleId };
+        return { type, controller, action, roleId, policy };
       };
 
       // We have to know the difference to add or remove the permissions entries in the database.
@@ -320,8 +326,9 @@ module.exports = {
             type: permission.type,
             controller: permission.controller,
             action: permission.action,
-            enabled: isPermissionEnabled(permission, rolesMap[permission.roleId]),
-            policy: '',
+            enabled:
+              !!permission.policy || isPermissionEnabled(permission, rolesMap[permission.roleId]),
+            policy: permission.policy || '',
             role: permission.roleId,
           })
         )
@@ -329,8 +336,8 @@ module.exports = {
 
       await Promise.all(
         toRemove.map(permission => {
-          const { type, controller, action, roleId: role } = permission;
-          return query.delete({ type, controller, action, role });
+          const { type, controller, action, roleId: role, policy } = permission;
+          return query.delete({ type, controller, action, role, policy: policy || '' });
         })
       );
     }

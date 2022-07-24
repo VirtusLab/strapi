@@ -37,7 +37,7 @@ const CardPreview = ({ extension, hasError, hasIcon, url, previewUrl, type, with
       ) : (
         // Adding performance.now forces the browser no to cache the img
         // https://stackoverflow.com/questions/126772/how-to-force-a-web-browser-not-to-cache-images
-        <Image src={`${url}${withFileCaching ? `?${cacheRef.current}` : ''}`} />
+        <Image src={`${url}${withFileCaching ? `?cache=${cacheRef.current}` : ''}`} />
       )}
     </Wrapper>
   );
